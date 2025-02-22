@@ -11,13 +11,21 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public void sendEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        message.setFrom("magosh90@gmail.com");
+    public boolean sendEmail(String to, String subject, String body) {
+        boolean response = false;
 
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            message.setFrom("magosh90@gmail.com");
+
+            mailSender.send(message);
+            response = true;
+        } catch (Exception e) {
+            System.out.println("Error sending email: " + e.getMessage());
+        }
+        return response;
     }
 }

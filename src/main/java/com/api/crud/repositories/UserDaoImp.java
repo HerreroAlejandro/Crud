@@ -18,31 +18,41 @@ public class UserDaoImp implements UserDao {
     @Autowired
     private EmailService emailService;
 
+
     @Transactional
     @Override
     public List<UserModel> getUsers() {
-        String query = "FROM UserModel";
+        String query = "FROM UserModel u";
         return entityManager.createQuery(query, UserModel.class).getResultList();
     }
 
     @Override
-    public void deleteUser(long id) {
+    public boolean deleteUser(long id) {
+        boolean response=false;
         UserModel user = entityManager.find(UserModel.class, id);
         if (user != null) {
             entityManager.remove(user);
             System.out.println("User with ID " + id + " was erased");
+            response=true;
         } else {
             System.out.println("User with ID " + id + " wasn't found");
         }
+       return response;
     }
 
+    @Transactional
     public void signUp(UserModel user) {
         try {
+            entityManager.merge(user);
             String subject = "Registration Confirmation";
             String body = "Hello " + user.getFirstName() + ",\n\n Your account has been created successfully.\n\nGreeting!";
-            emailService.sendEmail(user.getEmail(), subject, body);
+            boolean emailSent = emailService.sendEmail(user.getEmail(), subject, body);
 
-            entityManager.merge(user);
+            if (!emailSent) {
+                // Si no se pudo enviar el correo, lanza una excepción
+                throw new RuntimeException("Failed to send confirmation email, User not registered.");
+            }
+
             System.out.println("Your account was created successfully");
         } catch (Exception e) {
             System.out.println("error sending mail " + e.getMessage());
@@ -50,13 +60,11 @@ public class UserDaoImp implements UserDao {
         }
     }
 
-
     public Optional<UserModel> findUserById(Long id) {
         UserModel user = entityManager.find(UserModel.class, id);
         System.out.println(user != null ? "User with ID " + id + " was found" : "User with ID " + id + " wasn't found");
         return Optional.ofNullable(user);
     }
-
 
     public UserModel updateUserById(UserModel Request, Long id) {
         UserModel user = entityManager.find(UserModel.class, id);
