@@ -1,6 +1,7 @@
 package com.api.crud.services;
 
 import com.api.crud.DTO.UserDTO;
+import com.api.crud.DTO.UserModelDTO;
 import com.api.crud.models.UserModel;
 import com.api.crud.repositories.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,18 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public void signUp(UserModelDTO userModelDto) {
+        UserModel userModel = new UserModel(userModelDto.getId(), userModelDto.getFirstName(), userModelDto.getLastName(), userModelDto.getEmail(),userModelDto.getPhone(),userModelDto.getPassword());
+        userDao.signUp(userModel);
+    }
 
-    public void signUp(UserModel user) {
-        userDao.signUp(user);
+    public UserModelDTO updateUserById(UserModelDTO userModelDto, Long id) {
+        UserModel userModel = new UserModel(id, userModelDto.getFirstName(), userModelDto.getLastName(), userModelDto.getEmail(), userModelDto.getPhone(), userModelDto.getPassword());
+        UserModel updatedUser = userDao.updateUserById(userModel, id);
+
+        return (updatedUser != null)
+                ? new UserModelDTO(updatedUser.getId(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getEmail(), updatedUser.getPhone(), updatedUser.getPassword())
+                : null;
     }
 
     public UserDTO findUserById(Long id) {
@@ -33,16 +43,9 @@ public class UserService {
                 .orElse(null);
     }
 
-    public UserModel findUserModelById(Long id) {
-        return userDao.findUserById(id).orElse(null);
-    }
 
-    public UserModel updateUserById(UserModel request, Long id) {
-        return userDao.updateUserById(request, id);
-    }
-
-    public void deleteUser(long id) {
-        userDao.deleteUser(id);
+    public boolean deleteUser(long id) {
+        return userDao.deleteUser(id);
     }
 
 

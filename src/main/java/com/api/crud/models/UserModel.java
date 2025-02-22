@@ -41,4 +41,18 @@ public class UserModel {
     @Getter @Setter @Column(name= "password")
     private String password;
 
+    public UserModel(long id, String firstName, String lastName, String email, String phone, String password) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.password = password;
+    }
+
+    public UserModel(){}
+
+
+
+
 }
