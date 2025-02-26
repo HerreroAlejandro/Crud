@@ -13,20 +13,17 @@ public interface UserDao {
 
     boolean deleteUser(long id);
 
-    void signUp(UserModel user);
+    void register(UserModel user);
 
     @Query("SELECT u FROM UserModel u WHERE u.id = :id")
     Optional<UserModel> findUserById(@Param("id") Long id);
 
+    Optional<UserModel> findUserByEmail(String email);
+
+   // public Optional<UserModel> findUserByName(String firstName);
+
     public UserModel updateUserById(UserModel Request, Long id);
 
-
-
-
-
-
-
-   // UserModel obtenerUsuarioPorCredenciales(UserModel usuario);
 
 
 }

@@ -9,8 +9,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @ToString
 @EqualsAndHashCode
 public class UserModel {
@@ -40,6 +43,16 @@ public class UserModel {
 
     @Getter @Setter @Column(name= "password")
     private String password;
+
+
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @Getter @Setter
+    private Set<Role> roles = new HashSet<>();
 
     public UserModel(long id, String firstName, String lastName, String email, String phone, String password) {
         this.id = id;

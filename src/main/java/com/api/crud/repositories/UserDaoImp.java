@@ -2,6 +2,7 @@ package com.api.crud.repositories;
 import com.api.crud.models.UserModel;
 import com.api.crud.services.EmailService;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class UserDaoImp implements UserDao {
     }
 
     @Transactional
-    public void signUp(UserModel user) {
+    public void register(UserModel user) {
         try {
             entityManager.merge(user);
             String subject = "Registration Confirmation";
@@ -66,6 +67,31 @@ public class UserDaoImp implements UserDao {
         return Optional.ofNullable(user);
     }
 
+    public Optional<UserModel> findUserByEmail(String email) {
+        UserModel user = null;
+        try {
+            user = entityManager
+                    .createQuery("SELECT u FROM UserModel u WHERE u.email = :email", UserModel.class)
+                    .setParameter("email", email)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+
+        }
+        return Optional.ofNullable(user);
+    }
+
+  /*  public Optional<UserModel> findUserByName(String firstName) {
+        UserModel user = null;
+        try {
+            user = entityManager
+                    .createQuery("SELECT u FROM UserModel u WHERE u.firstName = :firstName", UserModel.class)
+                    .setParameter("firstName", firstName)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+        }
+        return Optional.ofNullable(user);
+    }*/
+
     public UserModel updateUserById(UserModel Request, Long id) {
         UserModel user = entityManager.find(UserModel.class, id);
         if (user != null) {
@@ -84,18 +110,6 @@ public class UserDaoImp implements UserDao {
 
     }
 
-    /*
-    public UserModel obtenerUsuarioPorCredenciales(UserModel usuario) {
-        String query = "FROM Usuario WHERE email = :email "; //Usuario es la clase
-        List<UserModel> newList = entityManager.createQuery(query)
-                .setParameter("email", usuario.getEmail())
-                .getResultList();
 
-        if (newList.isEmpty()) {      //Esto lo hago ya que si el mail no existe, y la lista vuelve vacia, el get de password traería un null y apareceria una excepcion
-            return null;
-        }
-        return usuario;
-    }
-    */
 
 }
