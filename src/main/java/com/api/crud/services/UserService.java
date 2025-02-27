@@ -10,9 +10,9 @@ import com.api.crud.models.UserModel;
 import com.api.crud.repositories.RoleDao;
 import com.api.crud.repositories.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,9 +55,7 @@ public class UserService {
         } else if (!userModelDTO.getPassword().equals(loginRequestDTO.getPassword())) {
             throw new IllegalArgumentException("Contraseña incorrecta");
         }
-
         List<String> roles = getRolesForEmail(userModelDTO.getEmail());
-
         return jwtUtil.generateToken(userModelDTO.getEmail(), roles);
     }
 
@@ -70,10 +68,50 @@ public class UserService {
                             .map(role -> role.getNameRole())
                             .collect(Collectors.toList());
 
-                    return new UserDTO(userModel.getId(), userModel.getFirstName(), userModel.getLastName(), userModel.getEmail(), roles);})
+                    return new UserDTO(userModel.getId(), userModel.getFirstName(), userModel.getLastName(), userModel.getEmail());
+                })
                 .collect(Collectors.toList());
         return userDTOs;
     }
+
+    public Page<UserModelDTO> getUsersModel(Pageable pageable) {
+        Page<UserModel> users = userDao.getUsersModel(pageable);
+
+        return users.map(userModel -> {
+            List<String> roles = userModel.getRoles().stream()
+                    .map(role -> role.getNameRole())
+                    .collect(Collectors.toList());
+
+            return new UserModelDTO(userModel.getId(), userModel.getFirstName(), userModel.getLastName(), userModel.getEmail(), userModel.getPassword(), userModel.getPhone(), roles);
+        });
+    }
+
+    public UserModelDTO updateUserById(UserModelDTO userModelDto, Long id) {
+        Optional<UserModel> userOptional = userDao.findUserById(id);
+
+        if (!userOptional.isPresent()) {
+            return null;
+        }
+
+        UserModel user = userOptional.get();
+
+        user.setFirstName(userModelDto.getFirstName());
+        user.setLastName(userModelDto.getLastName());
+        user.setEmail(userModelDto.getEmail());
+        user.setPhone(userModelDto.getPhone());
+        user.setPassword(userModelDto.getPassword());
+
+        UserModel updatedUser = userDao.updateUserById(user, id);
+
+        return (updatedUser != null)
+                ? new UserModelDTO(updatedUser.getId(), updatedUser.getFirstName(), updatedUser.getLastName(),
+                updatedUser.getEmail(), updatedUser.getPhone(), updatedUser.getPassword(),
+                updatedUser.getRoles().stream()
+                        .map(Role::getNameRole)
+                        .collect(Collectors.toList()))
+                : null;
+    }
+
 
     public void register(UserModelDTO userModelDto) {
 
@@ -88,36 +126,43 @@ public class UserService {
 
         userModel.getRoles().add(role);
 
-
         userDao.register(userModel);
     }
 
-    public UserModelDTO updateUserById(UserModelDTO userModelDto, Long id) {
-        UserModel userModel = new UserModel(id, userModelDto.getFirstName(), userModelDto.getLastName(), userModelDto.getEmail(), userModelDto.getPhone(), userModelDto.getPassword());
-        UserModel updatedUser = userDao.updateUserById(userModel, id);
 
-        return (updatedUser != null)
-                ? new UserModelDTO(updatedUser.getId(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getEmail(), updatedUser.getPhone(), updatedUser.getPassword())
-                : null;
-    }
-
-    public UserDTO findUserById(Long id) {
+    public UserModelDTO findUserById(Long id) {
         return userDao.findUserById(id)
                 .map(user -> {
                     List<String> roles = user.getRoles().stream()
                             .map(role -> role.getNameRole())
                             .collect(Collectors.toList());
 
-                    return new UserDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), roles);
+                    return new UserModelDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhone(), user.getPassword(), roles);
                 })
                 .orElse(null);
     }
 
     public UserModelDTO findUserByEmail(String email) {
         return userDao.findUserByEmail(email)
-                .map(user -> new UserModelDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhone(), user.getPassword()))
+                .map(user -> new UserModelDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhone(), user.getPassword(), user.getRoles()
+                        .stream()
+                        .map(Role::getNameRole)
+                        .collect(Collectors.toList())))
                 .orElse(null);
     }
+
+    public Optional<UserModelDTO> findUserByName(String firstName, String lastName) {
+        Optional<UserModel> user = userDao.findUserByName(firstName, lastName);
+
+        return user.map(userModel -> {
+            List<String> roles = userModel.getRoles().stream()
+                    .map(role -> role.getNameRole())
+                    .collect(Collectors.toList());
+
+            return new UserModelDTO(userModel.getId(), userModel.getFirstName(), userModel.getLastName(), userModel.getEmail(), userModel.getPhone(), userModel.getPassword(), roles);
+        });
+    }
+
 
     public boolean deleteUser(long id) {
         return userDao.deleteUser(id);

@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -17,23 +18,27 @@ import java.util.Set;
 @ToString
 @EqualsAndHashCode
 public class UserModel {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter
     private long id;
 
+    @Column(name = "firstName")
     @Getter @Setter
     @NotNull (message = "Name cannot be null")
-    @Column(name = "firstName")
+    @Size (min =2, max =25)
     private String firstName;
 
     @Column(name = "lastName")
     @Getter @Setter
     @NotNull (message = "lastName cannot be null")
+    @Size (min =2, max =25)
     private String lastName;
 
     @Column(name = "email")
     @Getter @Setter
+    @NotNull (message = "Email cannot be null")
     @Email (message = "Email should be valid")
     private String email;
 
@@ -41,9 +46,10 @@ public class UserModel {
     @Size (min =8, max =20)
     private String phone;
 
-    @Getter @Setter @Column(name= "password")
+    @Column(name= "password")
+    @Getter @Setter
+    @NotNull (message = "Password cannot be null")
     private String password;
-
 
 
     @ManyToMany

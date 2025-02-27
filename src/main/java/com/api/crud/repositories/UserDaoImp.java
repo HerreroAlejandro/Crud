@@ -6,6 +6,9 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +28,22 @@ public class UserDaoImp implements UserDao {
     public List<UserModel> getUsers() {
         String query = "FROM UserModel u";
         return entityManager.createQuery(query, UserModel.class).getResultList();
+    }
+
+    @Transactional
+    @Override
+    public Page<UserModel> getUsersModel(Pageable pageable) {
+        String query = "FROM UserModel u ORDER BY u." + pageable.getSort().iterator().next().getProperty();
+
+        List<UserModel> users = entityManager.createQuery(query, UserModel.class)
+                .setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
+                .setMaxResults(pageable.getPageSize())
+                .getResultList();
+
+        // Contar el total de registros
+        Long total = entityManager.createQuery("SELECT COUNT(u) FROM UserModel u", Long.class)
+                .getSingleResult();
+        return new PageImpl<>(users, pageable, total);
     }
 
     @Override
@@ -80,17 +99,21 @@ public class UserDaoImp implements UserDao {
         return Optional.ofNullable(user);
     }
 
-  /*  public Optional<UserModel> findUserByName(String firstName) {
+    @Transactional
+    @Override
+    public Optional<UserModel> findUserByName(String firstName, String lastName) {
         UserModel user = null;
         try {
             user = entityManager
-                    .createQuery("SELECT u FROM UserModel u WHERE u.firstName = :firstName", UserModel.class)
+                    .createQuery("SELECT u FROM UserModel u WHERE u.firstName = :firstName AND u.lastName = :lastName", UserModel.class)
                     .setParameter("firstName", firstName)
+                    .setParameter("lastName", lastName)
                     .getSingleResult();
         } catch (NoResultException e) {
+
         }
         return Optional.ofNullable(user);
-    }*/
+    }
 
     public UserModel updateUserById(UserModel Request, Long id) {
         UserModel user = entityManager.find(UserModel.class, id);
@@ -100,6 +123,7 @@ public class UserDaoImp implements UserDao {
             user.setEmail(Request.getEmail());
             user.setPhone(Request.getPhone());
             user.setPassword(Request.getPassword());
+
 
             entityManager.merge(user);
             System.out.println("User with ID " + id + " was modified");

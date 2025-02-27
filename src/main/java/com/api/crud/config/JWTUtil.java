@@ -68,8 +68,8 @@ public class JWTUtil {
 
     public List<String> extractRoles(String token) {
         Claims claims = extractAllClaims(token);
-        // Aquí asumimos que los roles están almacenados en el campo "roles" como una lista de cadenas
-        return claims.get("roles", List.class);  // Extrae el campo 'roles' y lo convierte en una lista
+
+        return claims.get("roles", List.class);
     }
 
     private Claims extractAllClaims(String token) {
