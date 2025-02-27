@@ -34,7 +34,7 @@ public class JWTFilter extends OncePerRequestFilter {
         if (token != null && jwtUtil.validateToken(token)) {
             String email = jwtUtil.extractUsername(token);
             List<String> roles = jwtUtil.extractRoles(token);
-            // Establece la autenticación en el contexto de Spring Security
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(email, null, roles.stream()
                             .map(SimpleGrantedAuthority::new)

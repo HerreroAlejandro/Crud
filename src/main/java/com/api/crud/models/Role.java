@@ -1,6 +1,7 @@
 package com.api.crud.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,12 +11,15 @@ import java.util.Set;
 @Table(name = "role")
 @Entity
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter
     private Long idRole;
 
+    @Column(name = "nameRole")
     @Getter @Setter
+    @NotNull(message = "NameRole cannot be null")
     private String nameRole;
 
     @ManyToMany(mappedBy = "roles")

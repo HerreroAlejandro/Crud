@@ -1,6 +1,8 @@
 package com.api.crud.repositories;
 
 import com.api.crud.models.UserModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +13,8 @@ import java.util.Optional;
 public interface UserDao {
     List<UserModel> getUsers();
 
+    Page<UserModel> getUsersModel(Pageable pageable);
+
     boolean deleteUser(long id);
 
     void register(UserModel user);
@@ -20,7 +24,7 @@ public interface UserDao {
 
     Optional<UserModel> findUserByEmail(String email);
 
-   // public Optional<UserModel> findUserByName(String firstName);
+    public Optional<UserModel> findUserByName(String firstName, String lastName);
 
     public UserModel updateUserById(UserModel Request, Long id);
 
