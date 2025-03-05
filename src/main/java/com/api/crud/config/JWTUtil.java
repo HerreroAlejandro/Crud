@@ -1,9 +1,12 @@
 package com.api.crud.config;
 
+import com.api.crud.controllers.AuthController;
 import com.zaxxer.hikari.pool.HikariProxyCallableStatement;
 import io.jsonwebtoken.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -11,6 +14,8 @@ import java.util.List;
 
 @Component
 public class JWTUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(JWTUtil.class);
 
 
     public static final String JWT_KEY = "andintheendtheloveyoutakeisequaltotheloveyoumake";
@@ -21,7 +26,7 @@ public class JWTUtil {
                 .setSubject(username)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS256, JWT_KEY)
                 .compact();
     }
@@ -59,10 +64,9 @@ public class JWTUtil {
             isValid = true;
         } catch (Exception e) {
             isValid = false;
-            System.out.println("Error de validación del token: " + e.getMessage());
+            logger.info("Error de validación del token: " + e.getMessage());
         }
-        System.out.println("Token recibido: " + token);
-        System.out.println("Token válido: " + isValid);
+        logger.info("Token válido: " + isValid);
         return isValid;
     }
 
