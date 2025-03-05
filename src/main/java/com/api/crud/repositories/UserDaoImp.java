@@ -10,8 +10,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Repository
 @Transactional
@@ -22,86 +26,116 @@ public class UserDaoImp implements UserDao {
     @Autowired
     private EmailService emailService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserDaoImp.class);
+
 
     @Transactional
     @Override
     public List<UserModel> getUsers() {
-        String query = "FROM UserModel u";
-        return entityManager.createQuery(query, UserModel.class).getResultList();
+        logger.debug("Executing query to fetch user");
+        List<UserModel> users;
+        try {
+            String query = "FROM UserModel u";
+            users = entityManager.createQuery(query, UserModel.class).getResultList();
+        } catch (Exception e) {
+            logger.error("Error while querying user: {}", e.getMessage());
+            users = Collections.emptyList();
+        }
+        return users;
     }
 
     @Transactional
     @Override
     public Page<UserModel> getUsersModel(Pageable pageable) {
+        logger.debug("Executing query to fetch users with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         String query = "FROM UserModel u ORDER BY u." + pageable.getSort().iterator().next().getProperty();
 
-        List<UserModel> users = entityManager.createQuery(query, UserModel.class)
-                .setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-                .setMaxResults(pageable.getPageSize())
-                .getResultList();
+        List<UserModel> users;
+        Long total;
+        try {
+            users = entityManager.createQuery(query, UserModel.class)
+                    .setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
+                    .setMaxResults(pageable.getPageSize())
+                    .getResultList();
+            total = entityManager.createQuery("SELECT COUNT(u) FROM UserModel u", Long.class)
+                    .getSingleResult();
+        } catch (Exception e) {
+            logger.error("Error while querying fetching paginated users: {}", e.getMessage());
+            return Page.empty();
+        }
 
-        // Contar el total de registros
-        Long total = entityManager.createQuery("SELECT COUNT(u) FROM UserModel u", Long.class)
-                .getSingleResult();
         return new PageImpl<>(users, pageable, total);
     }
 
     @Override
     public boolean deleteUser(long id) {
-        boolean response=false;
-        UserModel user = entityManager.find(UserModel.class, id);
-        if (user != null) {
-            entityManager.remove(user);
-            System.out.println("User with ID " + id + " was erased");
-            response=true;
-        } else {
-            System.out.println("User with ID " + id + " wasn't found");
+        logger.debug("Executing query Attempting to delete user with ID: {}", id);
+        boolean response = false;
+        try {
+            UserModel user = entityManager.find(UserModel.class, id);
+            if (user != null) {
+                entityManager.remove(user);
+                response = true;
+            }
+        } catch (Exception e) {
+            logger.error("Error while querying delete user with ID {}: {}", id, e.getMessage(), e);
         }
-       return response;
+        return response;
     }
 
     @Transactional
     public void register(UserModel user) {
+        logger.debug("Executing query Registering new user: {}", user.getEmail());
         try {
             entityManager.merge(user);
+
             String subject = "Registration Confirmation";
-            String body = "Hello " + user.getFirstName() + ",\n\n Your account has been created successfully.\n\nGreeting!";
+            String body = "Hello " + user.getFirstName() + ",\n\nYour account has been created successfully.\n\nGreetings!";
             boolean emailSent = emailService.sendEmail(user.getEmail(), subject, body);
 
             if (!emailSent) {
-                // Si no se pudo enviar el correo, lanza una excepción
+                logger.error("Failed to send confirmation email to {}, rolling back registration", user.getEmail());
                 throw new RuntimeException("Failed to send confirmation email, User not registered.");
             }
-
-            System.out.println("Your account was created successfully");
         } catch (Exception e) {
-            System.out.println("error sending mail " + e.getMessage());
-            throw new RuntimeException("Failed to send confirmation email, User not registered");
+            logger.error("Error occurred while registering user {}: {}", user.getEmail(), e.getMessage(), e);
+            throw new RuntimeException("Failed to send confirmation email, User not registered.");
         }
     }
 
     public Optional<UserModel> findUserById(Long id) {
-        UserModel user = entityManager.find(UserModel.class, id);
-        System.out.println(user != null ? "User with ID " + id + " was found" : "User with ID " + id + " wasn't found");
-        return Optional.ofNullable(user);
+        logger.debug("Executing query to find user with ID: {}", id);
+        try {
+            UserModel user = entityManager.find(UserModel.class, id);
+            return Optional.ofNullable(user);
+        } catch (Exception e) {
+            logger.error("Error while querying user with ID {}: {}", id, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     public Optional<UserModel> findUserByEmail(String email) {
-        UserModel user = null;
+        logger.debug("Executing query to find user with email: {}", email);
+
         try {
-            user = entityManager
+            UserModel user = entityManager
                     .createQuery("SELECT u FROM UserModel u WHERE u.email = :email", UserModel.class)
                     .setParameter("email", email)
                     .getSingleResult();
+            return Optional.of(user);
         } catch (NoResultException e) {
-
+            logger.debug("No user found with email: {}", email);
+        } catch (Exception e) {
+            logger.error("Unexpected error while querying user with email {}: {}", email, e.getMessage());
         }
-        return Optional.ofNullable(user);
+
+        return Optional.empty();
     }
 
     @Transactional
     @Override
     public Optional<UserModel> findUserByName(String firstName, String lastName) {
+        logger.debug("Executing query Searching for user with name: {} {}", firstName, lastName);
         UserModel user = null;
         try {
             user = entityManager
@@ -110,28 +144,27 @@ public class UserDaoImp implements UserDao {
                     .setParameter("lastName", lastName)
                     .getSingleResult();
         } catch (NoResultException e) {
-
+            logger.debug("No user found with name: {} {}", firstName, lastName);
+        } catch (Exception e) {
+            logger.error("Unexpected error while querying searching for user with name {} {}: {}", firstName, lastName, e.getMessage());
         }
         return Optional.ofNullable(user);
     }
 
-    public UserModel updateUserById(UserModel Request, Long id) {
+    public UserModel updateUserById(UserModel request, Long id) {
+        logger.debug("Executing query Updating user with ID: {}", id);
         UserModel user = entityManager.find(UserModel.class, id);
         if (user != null) {
-            user.setFirstName(Request.getFirstName());
-            user.setLastName(Request.getLastName());
-            user.setEmail(Request.getEmail());
-            user.setPhone(Request.getPhone());
-            user.setPassword(Request.getPassword());
-
-
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setPassword(request.getPassword());
             entityManager.merge(user);
-            System.out.println("User with ID " + id + " was modified");
         } else {
-            System.out.println("User with ID " + id + " wasn't found");
+            logger.debug("Querying User with ID {} wasn't found for update", id);
         }
         return user;
-
     }
 
 
