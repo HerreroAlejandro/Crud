@@ -2,6 +2,7 @@ package com.api.crud.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,9 +18,10 @@ public class Role {
     @Getter @Setter
     private Long idRole;
 
-    @Column(name = "nameRole")
+    @Column(name = "nameRole", unique = true)
     @Getter @Setter
     @NotNull(message = "NameRole cannot be null")
+    @Size(min =2, max =20)
     private String nameRole;
 
     @ManyToMany(mappedBy = "roles")
