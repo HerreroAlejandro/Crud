@@ -1,5 +1,6 @@
 package com.api.crud.repositories;
 
+import com.api.crud.models.Product;
 import com.api.crud.models.Role;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -23,7 +24,7 @@ public class RoleDaoImp implements RoleDao {
 
     @Override
     public Optional<Role> findRoleByName(String roleName) {
-        logger.debug("Executing query to fetch role by name");
+        logger.debug("Executing query to fetch role by name: {}", roleName);
         Role role = null;
         try {
             role = entityManager.createQuery(
@@ -37,7 +38,19 @@ public class RoleDaoImp implements RoleDao {
     }
 
     @Override
-    public void save(Role role) {
+    public Optional<Role> findRoleById(Long id) {
+        logger.debug("Executing query to find role with ID: {}", id);
+        try {
+            Role role = entityManager.find(Role.class, id);
+            return Optional.ofNullable(role);
+        } catch (Exception e) {
+            logger.error("Error while querying role with ID {}: {}", id, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void saveRole(Role role) {
         try {
             entityManager.persist(role);
             logger.debug("Query Role with ID {} was successfully saved", role.getIdRole());
@@ -57,4 +70,20 @@ public class RoleDaoImp implements RoleDao {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public boolean deleteRoleById(Long id) {
+        logger.debug("Executing query Attempting to delete role with ID: {}", id);
+        boolean response =false;
+        try{
+            Role role = entityManager.find(Role.class, id);
+            if (role != null) {
+                entityManager.remove(role);
+                response = true;
+            }}catch (Exception e) {
+            logger.error("Error while querying delete role with ID {}: {}", id, e.getMessage(), e);
+        }
+        return response;
+    }
+
 }

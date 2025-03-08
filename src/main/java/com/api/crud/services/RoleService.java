@@ -32,6 +32,19 @@ public class RoleService {
         return roleDTO;
     }
 
+    public Optional<RoleDTO> findRoleById(Long id){
+        logger.info("Starting to process findRoleBy id with id {} in services", id);
+        Optional<RoleDTO> roleDTO = roleDao.findRoleById(id)
+                .map(role -> new RoleDTO(role.getNameRole()));
+
+        if (roleDTO.isPresent()){
+            logger.debug("Role with id {} was found in services", id);
+        }else{
+            logger.debug("Role with id {} wasn't found in services", id);
+        }
+        return roleDTO;
+    }
+
     public List<RoleDTO> getRoles() {
         logger.debug("Retrieving all roles from RoleService...");
         List<RoleDTO> roleDTOs = roleDao.getRoles()
@@ -44,10 +57,25 @@ public class RoleService {
     }
 
     public void saveRole(RoleDTO roleDTO) {
-        logger.info("Starting to save new role: {}", roleDTO.getNameRole());
+        logger.info("Starting to save new role: {} in services", roleDTO.getNameRole());
         Role role = new Role();
         role.setNameRole(roleDTO.getNameRole());
-        roleDao.save(role);
+        roleDao.saveRole(role);
         logger.info("Role {} saved successfully in RoleService.", roleDTO.getNameRole());
     }
+
+    public boolean deleteRoleById(Long id) {
+        logger.info("Starting to delete role with id {} in services", id);
+        boolean result = roleDao.deleteRoleById(id);
+        if (result) {
+            logger.info("Role with ID {} deleted successfully", id);
+        } else {
+            logger.debug("Role with ID {} not found or deletion failed", id);
+        }
+        return result;
+    }
+
 }
+
+
+
