@@ -66,7 +66,6 @@ public class UserController {
             message = "An unexpected error occurred during login.";
             logger.error("Unexpected error during login for user with email: {}: {}", loginRequestDTO.getEmail(), e.getMessage());
         }
-
         return ResponseEntity.status(status).body(message != null ? message : token);
     }
 
