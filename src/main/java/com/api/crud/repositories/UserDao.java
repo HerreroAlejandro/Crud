@@ -15,7 +15,9 @@ public interface UserDao {
 
     Page<UserModel> getUsersModel(Pageable pageable);
 
-    boolean deleteUser(long id);
+    boolean deleteUserById(long id);
+
+    boolean deleteUserByEmail(String email);
 
     void register(UserModel user);
 
