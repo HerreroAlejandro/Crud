@@ -60,6 +60,10 @@ public class UserModel {
     @Getter @Setter
     private Set<Role> roles = new HashSet<>();
 
+    @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL)
+    @Getter @Setter
+    private List<Order> orders;
+
     public UserModel(long id, String firstName, String lastName, String email, String phone, String password) {
         this.id = id;
         this.firstName = firstName;
@@ -70,8 +74,5 @@ public class UserModel {
     }
 
     public UserModel(){}
-
-
-
 
 }

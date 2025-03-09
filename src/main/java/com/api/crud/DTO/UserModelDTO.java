@@ -13,7 +13,6 @@ public class UserModelDTO {
     private long id;
 
     @Getter @Setter
-    @Column(name = "firstName")
     private String firstName;
 
     @Getter @Setter
