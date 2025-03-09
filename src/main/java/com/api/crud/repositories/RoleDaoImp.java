@@ -40,13 +40,15 @@ public class RoleDaoImp implements RoleDao {
     @Override
     public Optional<Role> findRoleById(Long id) {
         logger.debug("Executing query to find role with ID: {}", id);
+        Optional<Role> response;
         try {
             Role role = entityManager.find(Role.class, id);
-            return Optional.ofNullable(role);
+            response =  Optional.ofNullable(role);
         } catch (Exception e) {
             logger.error("Error while querying role with ID {}: {}", id, e.getMessage());
-            return Optional.empty();
+            response = Optional.empty();
         }
+        return response;
     }
 
     @Override
@@ -61,14 +63,16 @@ public class RoleDaoImp implements RoleDao {
 
     @Override
     public List<Role> getRoles() {
+        List<Role> response;
         try {
             List<Role> roles = entityManager.createQuery("FROM Role", Role.class).getResultList();
             logger.debug(" query Successfully retrieved {} roles from the database", roles.size());
-            return roles;
+            response = roles;
         } catch (Exception e) {
             logger.error("Error query retrieving roles from the database: {}", e.getMessage());
-            return Collections.emptyList();
+            response = Collections.emptyList();
         }
+        return response;
     }
 
     @Override
