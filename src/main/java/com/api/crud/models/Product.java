@@ -14,7 +14,8 @@ import java.util.List;
 @Entity
 @Table(name = "products")
 @Inheritance(strategy = InheritanceType.JOINED)
-public class Product {
+@DiscriminatorColumn(name = "product_type")
+public abstract class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter
@@ -28,7 +29,6 @@ public class Product {
 
     @Column(name = "priceProduct")
     @Getter @Setter
-    @Digits(integer = 5, fraction = 2)
     private BigDecimal priceProduct;
 
     @Column(name = "description")
@@ -52,6 +52,14 @@ public class Product {
 
     public Product(Long idProduct, String nameProduct, BigDecimal priceProduct, String description, String imageUrl, String category) {
         this.idProduct = idProduct;
+        this.nameProduct = nameProduct;
+        this.priceProduct = priceProduct;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.category = category;
+    }
+
+    public Product(String nameProduct, BigDecimal priceProduct, String description, String imageUrl, String category) {
         this.nameProduct = nameProduct;
         this.priceProduct = priceProduct;
         this.description = description;
