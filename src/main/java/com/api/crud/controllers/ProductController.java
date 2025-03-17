@@ -9,7 +9,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -25,10 +24,10 @@ public class ProductController {
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     @GetMapping(path = "/ShowProducts")
-    public ResponseEntity<List<ProductDTO>> getAdminProducts() {
+    public ResponseEntity<List<ProductDTO>> showProducts() {
         logger.info("Starting to fetch products.");
-        List<ProductDTO> products = productService.getAdminProducts();
         ResponseEntity<List<ProductDTO>> response;
+        List<ProductDTO> products = productService.showProducts();
         if (products.isEmpty()) {
             logger.info("No products found");
             response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
@@ -39,33 +38,34 @@ public class ProductController {
         return response;
 }
 
-        @GetMapping(path = "/FindProductById/{id}")
-        public ResponseEntity<ProductDTO> findProductById(@PathVariable Long id) {
-            logger.info("received request to find product with id {}", id);
-            ResponseEntity<ProductDTO> response;
-            Optional<ProductDTO> product = productService.findProductById(id);
-            if (product.isPresent()) {
-                logger.info("User with ID: {} found successfully.", id);
-                response = ResponseEntity.ok(product.get());
-            } else {
-                logger.info("User with ID: {} not found.", id);
-                response = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
-            return response;
-        }
-
-    @GetMapping(path = "/findProductByName/{nameProduct}")
-    public ResponseEntity<ProductDTO> findProductByName(@PathVariable String nameProduct) {
-        logger.info("Starting to process request for product with name: {}", nameProduct);
+    @GetMapping(path = "/FindProductById/{id}")
+    public ResponseEntity<ProductDTO> findProductById(@PathVariable Long id) {
+        logger.info("received request to find product with id {}", id);
         ResponseEntity<ProductDTO> response;
-        Optional<ProductDTO> product = productService.findProductByName(nameProduct);
 
+        Optional<ProductDTO> product = productService.findProductById(id);
         if (product.isPresent()) {
-            logger.info("Product with name {} found.", nameProduct);
+            logger.info("Product with ID: {} found successfully.", id);
             response = ResponseEntity.ok(product.get());
         } else {
-            logger.info("Product with name {} not found.", nameProduct);
-            response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            logger.info("Product with ID: {} not found.", id);
+            response = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return response; // Único return
+    }
+
+    @GetMapping(path = "/FindProductByName/{nameProduct}")
+    public ResponseEntity<ProductDTO> findProductByName(@PathVariable String nameProduct) {
+        logger.info("received request to find product with name {}", nameProduct);
+        ResponseEntity<ProductDTO> response;
+
+        Optional<ProductDTO> product = productService.findProductByName(nameProduct);
+        if (product.isPresent()) {
+            logger.info("Product with name: {} found successfully.", nameProduct);
+            response = ResponseEntity.ok(product.get());
+        } else {
+            logger.info("Product with name: {} not found.", nameProduct);
+            response = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return response;
     }
@@ -75,7 +75,7 @@ public class ProductController {
             logger.info("Received request to save product {}" , productDTO.getNameProduct());
         ResponseEntity<String> response;
         try{
-            if (productService.findProductById(productDTO.getIdProduct()).isPresent()){
+            if (productDTO.getIdProduct() !=null && productService.findProductById(productDTO.getIdProduct()).isPresent()){
                 logger.warn("The Product '{}' already exists.", productDTO.getNameProduct());
                 response = ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The product already exists");
             }else{
@@ -109,7 +109,6 @@ public class ProductController {
         }
         return response;
         }
-
 
     }
 

@@ -1,19 +1,15 @@
 package com.api.crud.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 
-
-
 @Entity
-@Table(name = "productDigital")
+@Table(name = "productdigital")
+@DiscriminatorValue("DIGITAL")
 public class ProductDigital extends Product{
 
     @Column(name = "downloadLink")
@@ -26,8 +22,15 @@ public class ProductDigital extends Product{
     @Size (min =0, max =50)
     private String license;
 
+
     public ProductDigital(Long idProduct, String nameProduct, BigDecimal priceProduct, String description, String imageUrl, String category, String downloadLink, String license) {
         super(idProduct, nameProduct, priceProduct, description, imageUrl, category);
+        this.downloadLink = downloadLink;
+        this.license = license;
+    }
+
+    public ProductDigital(String nameProduct, BigDecimal priceProduct, String description, String imageUrl, String category, String downloadLink, String license) {
+        super(nameProduct, priceProduct, description, imageUrl, category);
         this.downloadLink = downloadLink;
         this.license = license;
     }

@@ -1,6 +1,8 @@
 package com.api.crud.repositories;
 
 import com.api.crud.models.Product;
+import com.api.crud.models.ProductDigital;
+import com.api.crud.models.ProductPhysical;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,7 +10,7 @@ import java.util.Optional;
 
 public interface ProductDao {
 
-    List<Product> getAdminProducts();
+    List<Product> showProducts();
 
     Optional<Product> findProductById(Long idProduct);
 

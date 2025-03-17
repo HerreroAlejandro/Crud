@@ -2,15 +2,16 @@ package com.api.crud.services;
 
 import com.api.crud.DTO.ProductDTO;
 import com.api.crud.models.Product;
+import com.api.crud.models.ProductDigital;
+import com.api.crud.models.ProductPhysical;
 import com.api.crud.repositories.ProductDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -20,66 +21,128 @@ public class ProductService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    public List<ProductDTO> getAdminProducts() {
-        logger.info("Starting to process getAdminProducts in service");
-        List<Product> products = productDao.getAdminProducts();
-        if (products.isEmpty()){
-            logger.debug("No products found in service.");
+    public List<ProductDTO> showProducts() {
+        logger.info("Starting to process showProducts in service");
+        List<Product> products = productDao.showProducts();
+        List<ProductDTO> productDTOs = new ArrayList<>();
+
+        for (Product product : products) {
+            if (product instanceof ProductDigital) {
+                ProductDigital digitalProduct = (ProductDigital) product;
+
+                ProductDTO digitalDTO = new ProductDTO(
+                        digitalProduct.getIdProduct(),
+                        digitalProduct.getNameProduct(),
+                        digitalProduct.getPriceProduct(),
+                        digitalProduct.getDescription(),
+                        digitalProduct.getImageUrl(),
+                        digitalProduct.getCategory(),
+                        digitalProduct.getDownloadLink(),
+                        digitalProduct.getLicense(),
+                        null,
+                        null
+                );
+                productDTOs.add(digitalDTO);
+            } else if (product instanceof ProductPhysical) {
+                ProductPhysical physicalProduct = (ProductPhysical) product;
+
+                ProductDTO physicalDTO = new ProductDTO(
+                        physicalProduct.getIdProduct(),
+                        physicalProduct.getNameProduct(),
+                        physicalProduct.getPriceProduct(),
+                        physicalProduct.getDescription(),
+                        physicalProduct.getImageUrl(),
+                        physicalProduct.getCategory(),
+                        null,
+                        null,
+                        physicalProduct.getStockProduct(),
+                        physicalProduct.getShippingAddress()
+                );
+                productDTOs.add(physicalDTO);
+            }
         }
-        List<ProductDTO> productsDTO = products.stream()
-                .map(product -> new ProductDTO(product.getIdProduct(), product.getNameProduct(), product.getPriceProduct(), product.getDescription(), product.getImageUrl(), product.getCategory()))
-                .collect(Collectors.toList());
-        logger.info("Successfully retrieved {} products", products.size());
-        return productsDTO;
+        return productDTOs;
     }
+
 
     public Optional<ProductDTO> findProductById(Long idProduct) {
-        logger.info("Starting to process Search for product with ID: {} in service", idProduct);
+        Optional<Product> productOpt = productDao.findProductById(idProduct);
 
-        Optional<ProductDTO> productAdminDTO = productDao.findProductById(idProduct)
-                .map(product -> {
-                    logger.info("Product with ID {} found in service", idProduct);
-                    return new ProductDTO(product.getIdProduct(), product.getNameProduct(), product.getPriceProduct(), product.getDescription(), product.getImageUrl(), product.getCategory());
-                });
-        if (productAdminDTO.isEmpty()) {
-            logger.info("Product with ID {} not found in service", idProduct);
+        if (productOpt.isEmpty()) {
+            return Optional.empty();
         }
-        return productAdminDTO;
+
+        Product product = productOpt.get();
+        ProductDTO productDTO;
+
+        if (product instanceof ProductDigital) {
+            ProductDigital pd = (ProductDigital) product;
+            productDTO = new ProductDTO(pd.getIdProduct(), pd.getNameProduct(), pd.getPriceProduct(),
+                    pd.getDescription(), pd.getImageUrl(), pd.getCategory(), pd.getDownloadLink(), pd.getLicense());
+        } else if (product instanceof ProductPhysical) {
+            ProductPhysical pp = (ProductPhysical) product;
+            productDTO = new ProductDTO(pp.getIdProduct(), pp.getNameProduct(), pp.getPriceProduct(),
+                    pp.getDescription(),pp.getImageUrl(), pp.getCategory(), pp.getStockProduct(), pp.getShippingAddress());
+        } else {
+            productDTO = new ProductDTO(product.getIdProduct(), product.getNameProduct(), product.getPriceProduct(),
+                    product.getDescription(),product.getImageUrl(), product.getCategory());
+        }
+        return Optional.of(productDTO);
     }
 
-    public Optional<ProductDTO> findProductByName(String nameProduct){
-        logger.info("Starting to process findProductByName: {}", nameProduct);
-        Optional<ProductDTO> response = productDao.findProductByName(nameProduct)
-                .map(product -> new ProductDTO(product.getIdProduct(), product.getNameProduct(), product.getPriceProduct(), product.getDescription(), product.getImageUrl(), product.getCategory()));
+    public Optional<ProductDTO> findProductByName(String nameProduct) {
+        Optional<Product> productOpt = productDao.findProductByName(nameProduct);
 
-        if (response.isPresent()){
-            logger.info("product with name: {} was found", nameProduct);
-        }else{
-            logger.info("product with name: {} wasn't found", nameProduct);
+        if (productOpt.isEmpty()) {
+            return Optional.empty();
         }
-        return response;
-    }
 
+        Product product = productOpt.get();
+        ProductDTO productDTO;
+
+        if (product instanceof ProductDigital) {
+            ProductDigital pd = (ProductDigital) product;
+            productDTO = new ProductDTO(pd.getIdProduct(), pd.getNameProduct(), pd.getPriceProduct(),
+                    pd.getDescription(), pd.getImageUrl(), pd.getCategory(), pd.getDownloadLink(), pd.getLicense());
+        } else if (product instanceof ProductPhysical) {
+            ProductPhysical pp = (ProductPhysical) product;
+            productDTO = new ProductDTO(pp.getIdProduct(), pp.getNameProduct(), pp.getPriceProduct(),
+                    pp.getDescription(), pp.getImageUrl(), pp.getCategory(), pp.getStockProduct(), pp.getShippingAddress());
+        } else {
+            productDTO = new ProductDTO(product.getIdProduct(), product.getNameProduct(), product.getPriceProduct(),
+                    product.getDescription(), product.getImageUrl(), product.getCategory());
+        }
+        return Optional.of(productDTO);
+    }
 
     public void saveProduct(ProductDTO productDTO) {
-        logger.info("Starting to process saveProduct with name {} in services", productDTO.getNameProduct());
-
-        try {
-            Product product = new Product();
-            product.setNameProduct(productDTO.getNameProduct());
-            product.setPriceProduct(productDTO.getPriceProduct());
-            product.setDescription(productDTO.getDescription());
-            product.setImageUrl(productDTO.getImageUrl());
-            product.setCategory(productDTO.getCategory());
-
-            productDao.saveProduct(product);
-            logger.info("Product with name {} successfully saved", productDTO.getNameProduct());
-
-        } catch (Exception e) {
-            logger.error("Error saving product with name {} in services: {}", productDTO.getNameProduct(), e.getMessage());
-            throw new RuntimeException("Error saving product: " + e.getMessage());
+        Product product;
+        if ("DIGITAL".equalsIgnoreCase(productDTO.getCategory())) {
+            product= new ProductDigital(
+                    productDTO.getNameProduct(),
+                    productDTO.getPriceProduct(),
+                    productDTO.getDescription(),
+                    productDTO.getImageUrl(),
+                    productDTO.getCategory(),
+                    productDTO.getDownloadLink(),
+                    productDTO.getLicense()
+            );
+        } else if ("PHYSICAL".equalsIgnoreCase(productDTO.getCategory())) {
+            product= new ProductPhysical(
+                    productDTO.getNameProduct(),
+                    productDTO.getPriceProduct(),
+                    productDTO.getDescription(),
+                    productDTO.getImageUrl(),
+                    productDTO.getCategory(),
+                    productDTO.getStockProduct(),
+                    productDTO.getShippingAddress()
+            );
+        } else {
+            throw new IllegalArgumentException("Invalid product type: " + productDTO.getCategory());
         }
+        productDao.saveProduct(product);
     }
+
 
     public boolean deleteProduct(Long idProduct){
         logger.info("Starting to process delete Product with id {} in services", idProduct);
@@ -87,7 +150,7 @@ public class ProductService {
         if (result) {
             logger.info("Product with id {} deleted", idProduct);
         }else{
-                logger.debug("Product with id {} not deleted in services");
+                logger.debug("Product with id {} not deleted in services", idProduct);
             }
             return result;
         }

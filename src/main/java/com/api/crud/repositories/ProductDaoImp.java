@@ -2,12 +2,12 @@ package com.api.crud.repositories;
 
 import com.api.crud.models.Product;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class ProductDaoImp implements ProductDao{
     private static final Logger logger = LoggerFactory.getLogger(ProductDaoImp.class);
 
     @Override
-    public List<Product> getAdminProducts() {
+    public List<Product> showProducts() {
         logger.debug("Executing query to fetch products");
         List<Product> products;
         try{
@@ -40,11 +40,19 @@ public class ProductDaoImp implements ProductDao{
     public Optional<Product> findProductById(Long idProduct) {
         logger.debug("Executing query to find product with ID: {}", idProduct);
         Optional<Product> response;
-        try{
-            Product product = entityManager.find(Product.class, idProduct);
+
+        String jpql = "SELECT p FROM Product p " +
+                "LEFT JOIN FETCH ProductDigital pd ON p.idProduct = pd.idProduct " +
+                "LEFT JOIN FETCH ProductPhysical pp ON p.idProduct = pp.idProduct " +
+                "WHERE p.idProduct = :idProduct";
+
+        try {
+            Product product = entityManager.createQuery(jpql, Product.class)
+                    .setParameter("idProduct", idProduct)
+                    .getSingleResult();
             response = Optional.ofNullable(product);
-        } catch(Exception e){
-            logger.error("Error while querying product with ID {}: {}", idProduct, e.getMessage());
+        } catch (NoResultException e) {
+            logger.error("Product with ID {} not found", idProduct);
             response = Optional.empty();
         }
         return response;
@@ -55,18 +63,18 @@ public class ProductDaoImp implements ProductDao{
         logger.debug("Executing query to find product with name: {}", nameProduct);
         Optional<Product> response;
 
-        try {
-            Product product = entityManager.createQuery(
-                            "SELECT p FROM Product p WHERE p.nameProduct = :nameProduct", Product.class)
-                    .setParameter("nameProduct", nameProduct)
-                    .getResultList()
-                    .stream()
-                    .findFirst()
-                    .orElse(null);
+        String jpql = "SELECT p FROM Product p " +
+                "LEFT JOIN FETCH ProductDigital pd ON p.idProduct = pd.idProduct " +
+                "LEFT JOIN FETCH ProductPhysical pp ON p.idProduct = pp.idProduct " +
+                "WHERE p.nameProduct = :nameProduct";
 
+        try {
+            Product product = entityManager.createQuery(jpql, Product.class)
+                    .setParameter("nameProduct", nameProduct)
+                    .getSingleResult();
             response = Optional.ofNullable(product);
-        } catch (Exception e) {
-            logger.error("Error while querying product with name {}: {}", nameProduct, e.getMessage());
+        } catch (NoResultException e) {
+            logger.error("Product with name {} not found", nameProduct);
             response = Optional.empty();
         }
         return response;
@@ -77,6 +85,7 @@ public class ProductDaoImp implements ProductDao{
         logger.debug("Executing query Registering new product: {}", product.getNameProduct());
         try{
             entityManager.persist(product);
+            entityManager.flush();
             logger.debug("Query Product with ID {} was successfully saved", product.getIdProduct());
         }catch(Exception e){
             logger.error("Error query saving Product with ID {}: {}", product.getIdProduct(), e.getMessage());
@@ -97,6 +106,5 @@ public class ProductDaoImp implements ProductDao{
             }
         return response;
         }
-
 
 }
