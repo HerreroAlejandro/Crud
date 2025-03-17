@@ -3,7 +3,6 @@ package com.api.crud.controllers;
 import com.api.crud.DTO.UserDTO;
 import com.api.crud.DTO.UserModelDTO;
 import com.api.crud.services.UserService;
-import org.apache.catalina.filters.ExpiresFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
